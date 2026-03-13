@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { curriculum } from "./data/curriculum";
+import { curriculum, exercises } from "./data/curriculum";
 
 function hexToRgb(hex) {
     const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
@@ -498,6 +498,7 @@ export default function ClaudeCodeCurriculum() {
     const [activeTopic, setActiveTopic] = useState(null);
     const [activeCommand, setActiveCommand] = useState(null);
     const [activeAdvantage, setActiveAdvantage] = useState(null);
+    const [activeExercise, setActiveExercise] = useState(null);
     const [activeSection, setActiveSection] = useState("curriculum");
 
     const totalTopics = curriculum.reduce((sum, m) => sum + m.topics.length, 0);
@@ -507,6 +508,7 @@ export default function ClaudeCodeCurriculum() {
 
     const navItems = [
         { id: "curriculum", label: "📚 Curriculum" },
+        { id: "exercises", label: "🧩 Exercises" },
         { id: "commands", label: "⚡ Commands" },
         { id: "advantages", label: "★ Advantages" },
         { id: "workflows", label: "🔄 Workflows" },
@@ -536,6 +538,7 @@ export default function ClaudeCodeCurriculum() {
                             { label: "Modules", value: curriculum.length, color: "#C084FC" },
                             { label: "Topics", value: totalTopics, color: "#4ECDC4" },
                             { label: "Subtopics", value: totalSubtopics, color: "#F59E0B" },
+                            { label: "Exercises", value: exercises.length, color: "#6366F1" },
                             { label: "Commands", value: commands.reduce((s, c) => s + c.items.length, 0), color: "#10B981" },
                             { label: "Total Hours", value: "~55", color: "#EF4444" },
                         ].map(stat => (
@@ -616,6 +619,73 @@ export default function ClaudeCodeCurriculum() {
                                 </div>
                             );
                         })}
+                    </div>
+                )}
+
+                {/* EXERCISES SECTION */}
+                {activeSection === "exercises" && (
+                    <div>
+                        <p style={{ color: "#606080", marginBottom: "32px", fontSize: "0.9rem" }}>
+                            Hands-on exercises with recipes, challenges, and starter files to build your Claude Code skills.
+                        </p>
+                        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(320px, 1fr))", gap: "20px" }}>
+                            {exercises.map((ex, ei) => {
+                                const isOpen = activeExercise === ei;
+                                return (
+                                    <div key={ei} onClick={() => setActiveExercise(isOpen ? null : ei)} style={{ background: isOpen ? "rgba(255,255,255,0.06)" : "#111118", border: `1px solid ${isOpen ? "rgba(255,255,255,0.24)" : "#1E1E30"}`, borderRadius: "16px", overflow: "hidden", cursor: "pointer", transition: "all 0.25s ease", transform: isOpen ? "translateY(-2px)" : "translateY(0)", boxShadow: isOpen ? "0 12px 30px rgba(0,0,0,0.4)" : "none" }}>
+                                        <div style={{ padding: "20px 24px", display: "flex", alignItems: "center", gap: "16px" }}>
+                                            <div style={{ width: "44px", height: "44px", background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: "12px", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "24px", flexShrink: 0 }}>
+                                                {ex.icon}
+                                            </div>
+                                            <div style={{ flex: 1, minWidth: 0 }}>
+                                                <div style={{ fontSize: "10px", letterSpacing: "2px", color: "#C0C0E8", textTransform: "uppercase", marginBottom: "4px" }}>{ex.module}</div>
+                                                <div style={{ fontSize: "1rem", fontWeight: "700", color: "#E8E8F8", lineHeight: 1.3 }}>{ex.title}</div>
+                                                <div style={{ fontSize: "11px", color: "#505070", marginTop: "6px" }}>{ex.duration} · {ex.commands.length} commands</div>
+                                            </div>
+                                            <div style={{ color: "#C084FC", fontSize: "18px", transform: isOpen ? "rotate(90deg)" : "rotate(0deg)", transition: "transform 0.2s", flexShrink: 0, marginTop: "4px" }}>›</div>
+                                        </div>
+                                        {isOpen && (
+                                            <div style={{ padding: "16px 24px 20px" }} onClick={e => e.stopPropagation()}>
+                                                <p style={{ color: "#9090B8", marginBottom: "16px", fontSize: "0.9rem" }}>{ex.description}</p>
+                                                <div style={{ display: "flex", gap: "14px", flexWrap: "wrap", marginBottom: "18px" }}>
+                                                    <div style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: "10px", padding: "10px 14px", fontSize: "0.75rem", color: "#C0C0E8" }}><strong>Path:</strong> {ex.path}</div>
+                                                    {ex.solution && (
+                                                        <div style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: "10px", padding: "10px 14px", fontSize: "0.75rem", color: "#C0C0E8" }}><strong>Solution:</strong> {ex.solution}</div>
+                                                    )}
+                                                </div>
+                                                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))", gap: "12px" }}>
+                                                    {ex.commands.map((cmd, ci) => (
+                                                        <div key={ci} style={{ background: "rgba(0,0,0,0.35)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: "10px", padding: "12px" }}>
+                                                            <div style={{ fontSize: "0.75rem", fontWeight: "700", color: "#C0D0E8", marginBottom: "6px" }}>{cmd.name}</div>
+                                                            <div style={{ fontSize: "0.75rem", color: "#9090B8", marginBottom: "10px" }}>{cmd.desc}</div>
+                                                            <div style={{ fontSize: "0.75rem", color: "#A0A8CC", wordBreak: "break-all" }}><code>{cmd.file}</code></div>
+                                                        </div>
+                                                    ))}
+                                                </div>
+
+                                                {ex.try?.length > 0 && (
+                                                    <div style={{ marginTop: "18px" }}>
+                                                        <div style={{ fontSize: "0.75rem", fontWeight: "700", color: "#C0D0E8", marginBottom: "8px" }}>Try</div>
+                                                        <ul style={{ margin: 0, padding: "0 0 0 18px", color: "#9090B8", fontSize: "0.78rem", lineHeight: 1.6 }}>
+                                                            {ex.try.map((t, ti) => (
+                                                                <li key={ti} style={{ marginBottom: "6px" }}>{t}</li>
+                                                            ))}
+                                                        </ul>
+                                                    </div>
+                                                )}
+
+                                                {ex.challenge && (
+                                                    <div style={{ marginTop: "18px" }}>
+                                                        <div style={{ fontSize: "0.75rem", fontWeight: "700", color: "#C0D0E8", marginBottom: "8px" }}>Challenge</div>
+                                                        <div style={{ fontSize: "0.82rem", color: "#9090B8" }}>{ex.challenge}</div>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        )}
+                                    </div>
+                                );
+                            })}
+                        </div>
                     </div>
                 )}
 
@@ -776,7 +846,7 @@ export default function ClaudeCodeCurriculum() {
 
                 {/* Footer */}
                 <div style={{ marginTop: "48px", padding: "24px", borderTop: "1px solid #1E1E30", textAlign: "center", color: "#404060", fontSize: "0.8rem" }}>
-                    Claude Code — by Anthropic · npm: @anthropic-ai/claude-code · docs.claude.com
+                    Claude Code — by Abhinav · AI Assited Development · docs.claude.com
                 </div>
             </div>
         </div>
