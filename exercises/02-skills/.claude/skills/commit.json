@@ -1,0 +1,10 @@
+{
+  "name": "commit",
+  "description": "Generate conventional commit messages from git diffs",
+  "version": "1.0.0",
+  "tools": ["Read", "Bash", "Skill"],
+  "entry_point": "commit.js",
+  "config": {
+    "types": ["feat", "fix", "docs", "style", "refactor", "test", "chore"]
+  }
+}

@@ -1,0 +1,74 @@
+{
+  "version": "1.0.0",
+  "claude": {
+    "model": "claude-sonnet-4-6",
+    "maxTokens": 8192,
+    "temperature": 0.7
+  },
+  "editor": {
+    "lineNumbers": true,
+    "wordWrap": true,
+    "tabSize": 2,
+    "insertFinalNewline": true,
+    "trimTrailingWhitespace": true
+  },
+  "commands": {
+    "autoConfirm": false,
+    "showToolCalls": true,
+    "showThinking": false
+  },
+  "agents": {
+    "defaultModel": "claude-sonnet-4-6",
+    "maxConcurrentAgents": 3,
+    "timeout": 120000
+  },
+  "skills": {
+    "autoLoad": true,
+    "showSkillOutput": true,
+    "allowCustomSkills": true
+  },
+  "mcp": {
+    "enabled": true,
+    "timeout": 30000,
+    "servers": {
+      "filesystem": {
+        "enabled": true,
+        "root": "."
+      },
+      "github": {
+        "enabled": false
+      }
+    }
+  },
+  "hooks": {
+    "enabled": true,
+    "preCommand": ".claude/hooks/pre-command.sh",
+    "postCommand": ".claude/hooks/post-command.sh",
+    "userPrompt": ".claude/hooks/user-prompt.sh"
+  },
+  "logging": {
+    "level": "info",
+    "file": ".claude/claude.log",
+    "maxSize": "10MB",
+    "maxFiles": 5
+  },
+  "shortcuts": {
+    "commit": "/commit",
+    "status": "!git status",
+    "diff": "!git diff --stat"
+  },
+  "context": {
+    "autoLoad": true,
+    "files": [
+      ".claude/context.md",
+      "CLAUDE.md",
+      "README.md"
+    ]
+  },
+  "features": {
+    "autoComplete": true,
+    "syntaxHighlighting": true,
+    "inlineDiff": true,
+    "previewMarkdown": true
+  }
+}

@@ -1,0 +1,86 @@
+{
+  "mcpServers": {
+    "filesystem": {
+      "command": "npx",
+      "args": ["-y", "@anthropic/mcp-server-filesystem", "./exercises/04-mcp-tools"],
+      "description": "Filesystem MCP server for reading and writing files",
+      "enabled": true
+    },
+    "github": {
+      "command": "npx",
+      "args": ["-y", "@anthropic/mcp-server-github"],
+      "env": {
+        "GITHUB_PERSONAL_ACCESS_TOKEN": "${env.GITHUB_TOKEN}"
+      },
+      "description": "GitHub MCP server for repository operations",
+      "enabled": false
+    },
+    "postgres": {
+      "command": "npx",
+      "args": ["-y", "@anthropic/mcp-server-postgres", "postgresql://localhost/mydb"],
+      "description": "PostgreSQL MCP server for database operations",
+      "enabled": false
+    }
+  },
+  "mcpTools": {
+    "file-analyzer": {
+      "name": "file-analyzer",
+      "description": "Analyze file contents for statistics and patterns",
+      "script": "./src/tools/file-analyzer.js",
+      "parameters": {
+        "path": {
+          "type": "string",
+          "description": "Path to file to analyze",
+          "required": true
+        },
+        "metrics": {
+          "type": "array",
+          "description": "Metrics to calculate",
+          "enum": ["lines", "words", "characters", "complexity"],
+          "default": ["lines", "words"]
+        }
+      }
+    },
+    "mock-api": {
+      "name": "mock-api",
+      "description": "Create and manage mock API endpoints",
+      "script": "./src/tools/mock-api.js",
+      "parameters": {
+        "action": {
+          "type": "string",
+          "enum": ["create", "list", "delete", "reset"],
+          "required": true
+        },
+        "endpoint": {
+          "type": "string",
+          "description": "API endpoint path (e.g., /api/users)"
+        },
+        "method": {
+          "type": "string",
+          "enum": ["GET", "POST", "PUT", "DELETE", "PATCH"],
+          "default": "GET"
+        },
+        "response": {
+          "type": "object",
+          "description": "Mock response data"
+        }
+      }
+    },
+    "code-metrics": {
+      "name": "code-metrics",
+      "description": "Calculate code quality metrics",
+      "script": "./src/tools/code-metrics.js",
+      "parameters": {
+        "path": {
+          "type": "string",
+          "description": "Path to analyze",
+          "required": true
+        },
+        "language": {
+          "type": "string",
+          "description": "Programming language"
+        }
+      }
+    }
+  }
+}

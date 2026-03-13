@@ -1,0 +1,10 @@
+{
+  "name": "todo",
+  "description": "A simple task management skill for tracking todos",
+  "version": "1.0.0",
+  "tools": ["Read", "Write", "Edit", "Bash"],
+  "entry_point": "todo.js",
+  "config": {
+    "data_file": ".claude/todos.json"
+  }
+}

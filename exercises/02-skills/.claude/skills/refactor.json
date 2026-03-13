@@ -1,0 +1,16 @@
+{
+  "name": "refactor",
+  "description": "Code refactoring assistant with patterns and best practices",
+  "version": "1.0.0",
+  "tools": ["Read", "Edit", "Write", "Glob", "Grep"],
+  "entry_point": "refactor.js",
+  "config": {
+    "patterns": [
+      "extract-function",
+      "rename-variable",
+      "inline-variable",
+      "move-method",
+      "simplify-conditionals"
+    ]
+  }
+}

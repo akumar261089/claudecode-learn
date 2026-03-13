@@ -1,0 +1,16 @@
+{
+  "name": "deploy",
+  "description": "Deployment skill for managing deployments across environments",
+  "version": "1.0.0",
+  "tools": ["Read", "Write", "Bash", "Edit"],
+  "entry_point": "deploy.js",
+  "config": {
+    "environments": ["development", "staging", "production"],
+    "requireCleanWorkingTree": true,
+    "preDeployChecks": [
+      "git-status",
+      "test-suite",
+      "build-verification"
+    ]
+  }
+}
