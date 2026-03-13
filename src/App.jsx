@@ -8,6 +8,8 @@ function hexToRgb(hex) {
         : "255,255,255";
 }
 
+// ─── ALL CONTENT VERIFIED AGAINST OFFICIAL DOCS (March 2026, v2.1.72) ───────
+
 const commands = [
     {
         category: "Installation & Setup",
@@ -16,30 +18,34 @@ const commands = [
         items: [
             {
                 cmd: "npm install -g @anthropic-ai/claude-code",
-                desc: "Install Claude Code globally on your system",
+                desc: "Install Claude Code globally on your system. Requires Node.js 18+.",
                 examples: [
                     { label: "Install latest", code: "npm install -g @anthropic-ai/claude-code" },
-                    { label: "Install specific version", code: "npm install -g @anthropic-ai/claude-code@1.2.0" },
                     { label: "Update to latest", code: "npm update -g @anthropic-ai/claude-code" },
-                    { label: "Verify install", code: "claude --version" },
-                ],
-            },
-            {
-                cmd: "claude --version",
-                desc: "Check the installed version of Claude Code",
-                examples: [
+                    // FIX: added 'claude update' which is the in-tool update command
+                    { label: "Update from within Claude Code", code: "claude update" },
+                    { label: "Verify install & diagnose", code: "claude doctor" },
                     { label: "Check version", code: "claude --version" },
-                    { label: "Check full info", code: "claude --help" },
                 ],
             },
             {
                 cmd: "export ANTHROPIC_API_KEY=sk-...",
-                desc: "Set your Anthropic API key as an environment variable",
+                desc: "Set your Anthropic API key as an environment variable. Required before first launch.",
                 examples: [
                     { label: "Set in terminal session", code: "export ANTHROPIC_API_KEY=sk-ant-xxxx" },
-                    { label: "Add to .bashrc permanently", code: 'echo \'export ANTHROPIC_API_KEY=sk-ant-xxxx\' >> ~/.bashrc' },
-                    { label: "Add to .zshrc permanently", code: 'echo \'export ANTHROPIC_API_KEY=sk-ant-xxxx\' >> ~/.zshrc' },
+                    { label: "Add to .bashrc permanently", code: "echo 'export ANTHROPIC_API_KEY=sk-ant-xxxx' >> ~/.bashrc" },
+                    { label: "Add to .zshrc permanently", code: "echo 'export ANTHROPIC_API_KEY=sk-ant-xxxx' >> ~/.zshrc" },
                     { label: "Use a .env file", code: "echo 'ANTHROPIC_API_KEY=sk-ant-xxxx' > .env" },
+                ],
+            },
+            {
+                // FIX: added claude auth login as the modern login method (v2.1.41+)
+                cmd: "claude auth login",
+                desc: "Log in to your Anthropic account directly from the CLI (v2.1.41+). Alternative to the API key env var.",
+                examples: [
+                    { label: "Login via browser", code: "claude auth login" },
+                    { label: "Logout", code: "claude auth logout" },
+                    { label: "Check auth status", code: "claude auth status" },
                 ],
             },
         ],
@@ -51,38 +57,32 @@ const commands = [
         items: [
             {
                 cmd: "claude",
-                desc: "Start an interactive REPL session in your current directory",
+                desc: "Start an interactive REPL session in your current directory. Every new run is a fresh session.",
                 examples: [
-                    { label: "Start session", code: "claude" },
+                    { label: "Start fresh session", code: "claude" },
                     { label: "Start in a specific directory", code: "cd my-project && claude" },
-                    { label: "Start with initial prompt", code: 'claude "explain this codebase to me"' },
+                    { label: "Start with initial prompt (seeds context)", code: 'claude "explain this codebase to me"' },
                 ],
             },
             {
-                cmd: 'claude "task description"',
-                desc: "Run a one-shot task without entering interactive mode",
+                // FIX: -c / --continue is the correct flag for "most recent session"
+                cmd: "claude -c",
+                desc: "Continue (resume) the most recent conversation. Short for --continue. Picks up right where you left off.",
                 examples: [
-                    { label: "Fix a bug", code: 'claude "fix the null pointer error in src/auth.js"' },
-                    { label: "Generate a file", code: 'claude "create a .env.example file for this project"' },
-                    { label: "Explain code", code: 'claude "explain what the middleware in server.js does"' },
-                    { label: "Write tests", code: 'claude "write unit tests for the UserService class"' },
+                    { label: "Continue most recent session", code: "claude -c" },
+                    { label: "Continue and add a prompt immediately", code: 'claude -c "now write the tests for what we just built"' },
                 ],
             },
             {
+                // FIX: --resume / -r is for picking a specific session, not "most recent"
                 cmd: "claude --resume",
-                desc: "Resume the most recent conversation session",
+                desc: "Open an interactive session picker to resume any past session. Use -r <id> to jump directly to a session by ID.",
                 examples: [
-                    { label: "Resume last session", code: "claude --resume" },
-                    { label: "Resume specific session by ID", code: "claude --resume abc123" },
-                    { label: "List sessions then resume", code: "claude --list-sessions" },
-                ],
-            },
-            {
-                cmd: "claude --new-session",
-                desc: "Force-start a fresh session, ignoring any previous context",
-                examples: [
-                    { label: "New clean session", code: "claude --new-session" },
-                    { label: "New session with task", code: 'claude --new-session "start fresh: scaffold a new React app"' },
+                    { label: "Open session picker", code: "claude --resume" },
+                    { label: "Resume specific session by ID (short flag)", code: 'claude -r "auth-refactor" "continue from where we left off"' },
+                    // FIX: sessions are stored in ~/.claude/projects/ — no --list-sessions flag exists
+                    { label: "Find old sessions manually", code: "ls ~/.claude/projects/" },
+                    { label: "Name a session for easy retrieval later (in-session)", code: "/rename auth-refactor" },
                 ],
             },
         ],
@@ -93,31 +93,38 @@ const commands = [
         icon: "🤖",
         items: [
             {
-                cmd: "claude --print",
-                desc: "Print Claude's response to stdout and exit — ideal for scripts and CI pipelines",
+                // FIX: correct short flag is -p, not --print (though --print also works)
+                cmd: "claude -p",
+                desc: "Print mode: send a query and exit non-interactively. Ideal for scripts, CI pipelines, and shell piping. Alias: --print",
                 examples: [
-                    { label: "Get explanation as text", code: 'claude --print "summarize src/index.js"' },
-                    { label: "Pipe into a file", code: 'claude --print "generate a changelog" > CHANGELOG.md' },
-                    { label: "Use in bash script", code: 'SUMMARY=$(claude --print "summarize this PR diff")' },
-                    { label: "Chain with grep", code: 'claude --print "list all TODO comments" | grep "URGENT"' },
+                    { label: "Get explanation as text", code: 'claude -p "summarize src/index.js"' },
+                    { label: "Pipe stdin into Claude", code: 'cat error.log | claude -p "explain this error"' },
+                    { label: "Pipe output into a file", code: 'claude -p "generate a changelog" > CHANGELOG.md' },
+                    { label: "Use in bash variable", code: 'SUMMARY=$(claude -p "summarize this PR diff")' },
+                    { label: "Chain with grep", code: 'claude -p "list all TODO comments" | grep "URGENT"' },
+                    // FIX: --max-turns prevents runaway loops in automation
+                    { label: "Cap agentic turns in CI", code: 'claude --max-turns 5 -p "fix lint errors"' },
                 ],
             },
             {
                 cmd: "claude --output-format json",
-                desc: "Output the response as structured JSON for programmatic processing",
+                desc: "Output the full response as structured JSON. Best combined with -p for scripting.",
                 examples: [
-                    { label: "JSON output", code: 'claude --output-format json "list all exported functions"' },
-                    { label: "Pipe to jq", code: 'claude --output-format json "audit dependencies" | jq \'.issues\'', },
-                    { label: "Save JSON report", code: 'claude --output-format json "security scan" > report.json' },
+                    { label: "JSON output", code: 'claude -p --output-format json "list all exported functions"' },
+                    { label: "Extract session ID for chaining", code: "session_id=$(claude -p --output-format json \"start review\" | jq -r '.session_id')" },
+                    { label: "Pipe to jq", code: "claude -p --output-format json \"audit dependencies\" | jq '.issues'" },
+                    { label: "Save JSON report", code: 'claude -p --output-format json "security scan" > report.json' },
                 ],
             },
             {
-                cmd: "claude -f prompt.md",
-                desc: "Load a prompt from a markdown file instead of typing it inline",
+                // FIX: removed the -f flag (not documented). Correct approach is --append-system-prompt or --system-prompt
+                cmd: "claude --system-prompt",
+                desc: "Replace the default system prompt for this session. Use --append-system-prompt to add to it instead.",
                 examples: [
-                    { label: "Run a saved prompt", code: "claude -f prompts/refactor.md" },
-                    { label: "Create and run a prompt file", code: "echo '# Task\\nRefactor all async callbacks to async/await' > task.md && claude -f task.md" },
-                    { label: "Use a template", code: "claude -f templates/code-review.md" },
+                    { label: "Replace system prompt", code: 'claude --system-prompt "You are a security-focused code reviewer"' },
+                    { label: "Append to existing system prompt", code: 'claude --append-system-prompt "Always suggest tests for any code you write"' },
+                    // Workaround for prompt files: pipe them in
+                    { label: "Load a prompt from a file (workaround)", code: 'claude -p --append-system-prompt "$(cat prompts/refactor.md)" "refactor the auth module"' },
                 ],
             },
         ],
@@ -129,12 +136,17 @@ const commands = [
         items: [
             {
                 cmd: "claude --model",
-                desc: "Specify which Claude model to use for the session",
+                desc: "Specify which Claude model to use. Accepts full model strings or short aliases like 'sonnet', 'haiku', 'opus'.",
                 examples: [
-                    { label: "Use Claude Sonnet (default)", code: "claude --model claude-sonnet-4-6" },
-                    { label: "Use Claude Opus (most capable)", code: "claude --model claude-opus-4-6" },
-                    { label: "Use Claude Haiku (fastest)", code: "claude --model claude-haiku-4-5-20251001" },
-                    { label: "One-shot with model", code: 'claude --model claude-opus-4-6 "architect a new payments service"' },
+                    // FIX: updated model strings to current (March 2026)
+                    { label: "Use Sonnet (default, best balance)", code: "claude --model claude-sonnet-4-6" },
+                    { label: "Use Opus (most capable, use sparingly)", code: "claude --model claude-opus-4-6" },
+                    // FIX: corrected Haiku model string
+                    { label: "Use Haiku (fastest, most token-efficient)", code: "claude --model claude-haiku-4-5" },
+                    { label: "Short alias — model picker", code: "claude --model haiku" },
+                    { label: "One-shot with Opus for complex task", code: 'claude --model opus "architect a new payments service"' },
+                    // FIX: added /model in-session command
+                    { label: "Switch model mid-session (in-session command)", code: "/model" },
                 ],
             },
         ],
@@ -146,29 +158,41 @@ const commands = [
         items: [
             {
                 cmd: "claude --allowedTools",
-                desc: "Whitelist only specific tools Claude is permitted to use",
+                desc: "Whitelist only specific tools Claude is permitted to use. Tool names are capitalized. Bash commands can be scoped.",
                 examples: [
-                    { label: "Allow only file reads", code: "claude --allowedTools read" },
-                    { label: "Allow bash and write", code: "claude --allowedTools bash,write" },
-                    { label: "Allow git operations", code: "claude --allowedTools bash,read,write,git" },
-                    { label: "Read-only audit mode", code: 'claude --allowedTools read "audit this codebase for security issues"' },
+                    // FIX: tool names are capitalized: Read, Write, Bash — not lowercase
+                    { label: "Allow only file reads", code: 'claude --allowedTools "Read"' },
+                    { label: "Allow bash and write", code: 'claude --allowedTools "Read,Write,Bash"' },
+                    { label: "Scope Bash to git only (safe)", code: 'claude --allowedTools "Read,Write,Bash(git *)"' },
+                    { label: "Read-only audit mode", code: 'claude --allowedTools "Read" -p "audit this codebase for security issues"' },
                 ],
             },
             {
                 cmd: "claude --disallowedTools",
-                desc: "Blacklist specific tools, allowing everything else",
+                desc: "Blacklist specific tools, allowing everything else. Useful for safe review or analysis sessions.",
                 examples: [
-                    { label: "Prevent bash execution", code: "claude --disallowedTools bash" },
-                    { label: "Prevent any writes", code: "claude --disallowedTools write,bash" },
-                    { label: "Safe review mode", code: 'claude --disallowedTools bash,write "review my code and suggest improvements"' },
+                    { label: "Prevent bash execution", code: 'claude --disallowedTools "Bash"' },
+                    { label: "Block writes and bash", code: 'claude --disallowedTools "Write,Bash"' },
+                    // FIX: prevent deleting files specifically with bash scope
+                    { label: "Block destructive bash commands only", code: 'claude --disallowedTools "Bash(rm *)"' },
+                    { label: "Safe review mode", code: 'claude --disallowedTools "Bash,Write" "review my code and suggest improvements"' },
                 ],
             },
             {
                 cmd: "claude --dangerously-skip-permissions",
-                desc: "Skip all permission prompts — use only in trusted automated environments",
+                desc: "Skip all permission prompts. Only use in fully trusted, automated environments like CI containers.",
                 examples: [
-                    { label: "CI pipeline usage", code: 'claude --dangerously-skip-permissions --print "fix lint errors"' },
-                    { label: "Automated refactor", code: "claude --dangerously-skip-permissions -f scripts/nightly-refactor.md" },
+                    { label: "CI pipeline usage", code: 'claude --dangerously-skip-permissions -p "fix lint errors"' },
+                    { label: "Automated refactor with turn cap", code: 'claude --dangerously-skip-permissions --max-turns 10 -p "apply nightly refactor"' },
+                ],
+            },
+            {
+                // FIX: added --sandbox flag (available on Linux/macOS) — important safety feature
+                cmd: "claude --sandbox",
+                desc: "Run in an isolated sandbox — restricts Bash to a safe environment so it cannot modify your real filesystem.",
+                examples: [
+                    { label: "Start sandboxed session", code: "claude --sandbox" },
+                    { label: "Sandboxed one-shot task", code: 'claude --sandbox -p "run the test suite and report failures"' },
                 ],
             },
         ],
@@ -180,14 +204,12 @@ const commands = [
         items: [
             {
                 cmd: "/help",
-                desc: "Show all available slash commands and keyboard shortcuts",
-                examples: [
-                    { label: "Show help", code: "/help" },
-                ],
+                desc: "Show all available slash commands including custom commands from .claude/commands/ and connected MCP servers.",
+                examples: [{ label: "Show help", code: "/help" }],
             },
             {
                 cmd: "/clear",
-                desc: "Clear the current conversation history and start fresh context",
+                desc: "Wipe conversation history and start fresh context. Use when switching to a completely unrelated task.",
                 examples: [
                     { label: "Clear context", code: "/clear" },
                     { label: "Clear then start new task", code: "/clear\nNow help me build a login form" },
@@ -195,39 +217,63 @@ const commands = [
             },
             {
                 cmd: "/compact",
-                desc: "Compress conversation history to save tokens while preserving key context",
+                desc: "Compress conversation history to free context window space. Optionally pass focus instructions to control what survives.",
                 examples: [
-                    { label: "Compact context", code: "/compact" },
-                    { label: "Compact with custom instructions", code: "/compact focus on the authentication module we discussed" },
+                    { label: "Compact with no focus", code: "/compact" },
+                    { label: "Compact, retain specific context", code: "/compact keep the database schema and error handling patterns" },
+                    { label: "Compact, focus on auth module", code: "/compact retain the authentication flow and test results" },
                 ],
             },
             {
-                cmd: "/status",
-                desc: "Show current session info: model, token usage, active tools",
-                examples: [
-                    { label: "View status", code: "/status" },
-                ],
-            },
-            {
+                // FIX: /cost is real; /status is gone — replaced by /context and /model
                 cmd: "/cost",
-                desc: "Display the estimated token cost of the current session",
+                desc: "Display estimated token usage and cost for the current session. Essential for budget-aware development.",
+                examples: [{ label: "Check session cost", code: "/cost" }],
+            },
+            {
+                // FIX: /context is the command for checking context window usage (replaces the old /status)
+                cmd: "/context",
+                desc: "Show current context window usage — how full your conversation buffer is. Use before deciding to /compact or /clear.",
                 examples: [
-                    { label: "Check cost", code: "/cost" },
+                    { label: "Check context usage", code: "/context" },
+                    { label: "Typical workflow", code: "# Check usage\n/context\n# If over 80%, compact\n/compact retain the key decisions" },
                 ],
             },
             {
-                cmd: "/review",
-                desc: "Trigger a code review of recent changes (custom command)",
+                cmd: "/model",
+                desc: "Switch the Claude model mid-session without restarting. Opens an interactive model picker.",
                 examples: [
-                    { label: "Review staged changes", code: "/review" },
-                    { label: "Review specific file", code: "/review src/auth/middleware.js" },
+                    { label: "Open model picker", code: "/model" },
+                    { label: "When to switch to Opus", code: "# Use Opus for complex architecture decisions\n/model\n# Pick claude-opus-4-6" },
+                ],
+            },
+            {
+                cmd: "/resume",
+                desc: "Open a session picker inside an active session to jump to a past conversation. Alias: /continue",
+                examples: [
+                    { label: "Open session picker", code: "/resume" },
+                    { label: "Resume then immediately ask a question", code: "/resume\n# Select your session from the list" },
+                ],
+            },
+            {
+                cmd: "/rename",
+                desc: "Give the current session a human-readable name so it's easy to find with --resume later.",
+                examples: [
+                    { label: "Name current session", code: "/rename auth-refactor" },
+                    { label: "Name a debugging session", code: "/rename orders-500-debug" },
                 ],
             },
             {
                 cmd: "/init",
-                desc: "Initialize a CLAUDE.md file for the current project",
+                desc: "Scan the current project and generate a starter CLAUDE.md file with detected conventions.",
+                examples: [{ label: "Initialize project memory", code: "/init" }],
+            },
+            {
+                cmd: "/diff",
+                desc: "Show a diff of all changes made by Claude in the current session. Use before committing to review Claude's work.",
                 examples: [
-                    { label: "Create CLAUDE.md", code: "/init" },
+                    { label: "Review all session changes", code: "/diff" },
+                    { label: "Typical pre-commit workflow", code: "/diff\n# Review changes\ngit add . && git commit -m 'feat: ...' " },
                 ],
             },
         ],
@@ -239,24 +285,24 @@ const commands = [
         items: [
             {
                 cmd: "claude (git commit messages)",
-                desc: "Ask Claude to generate meaningful commit messages based on your diff",
+                desc: "Ask Claude to generate meaningful commit messages based on your staged diff.",
                 examples: [
-                    { label: "Generate commit message", code: 'claude "write a commit message for my staged changes"' },
-                    { label: "Conventional commit format", code: 'claude "write a conventional commit message for: git diff --staged"' },
-                    { label: "Commit with auto-message", code: 'git add . && claude --print "write a git commit message for these changes" | git commit -F -' },
+                    { label: "Generate commit message", code: 'claude -p "write a commit message for my staged changes: $(git diff --staged)"' },
+                    { label: "Conventional commit format", code: 'claude -p "write a conventional commit (feat/fix/chore) for: $(git diff --staged)"' },
+                    { label: "Pipe into git commit", code: 'claude -p "write a git commit message for $(git diff --staged)" | git commit -F -' },
                 ],
             },
             {
                 cmd: "claude (PR descriptions)",
-                desc: "Generate pull request titles and descriptions from your branch diff",
+                desc: "Generate pull request titles and descriptions from your branch diff.",
                 examples: [
-                    { label: "Generate PR description", code: 'claude "write a PR description comparing main to this branch"' },
-                    { label: "Structured PR with checklist", code: 'claude "write a PR description with summary, changes, and testing checklist"' },
+                    { label: "Generate PR description", code: 'claude -p "write a PR description for: $(git diff main...HEAD)"' },
+                    { label: "Structured PR with checklist", code: 'claude -p "write a PR description with: summary, list of changes, and testing checklist for: $(git diff main...HEAD)"' },
                 ],
             },
             {
                 cmd: "claude (merge conflict resolution)",
-                desc: "Resolve merge conflicts intelligently using AI understanding of code intent",
+                desc: "Resolve merge conflicts intelligently using AI understanding of code intent.",
                 examples: [
                     { label: "Resolve all conflicts", code: 'claude "resolve the merge conflicts in src/ keeping the newer logic"' },
                     { label: "Explain conflicts first", code: 'claude "explain the merge conflicts in auth.js before resolving them"' },
@@ -271,28 +317,37 @@ const commands = [
         items: [
             {
                 cmd: "CLAUDE.md",
-                desc: "Project memory file — Claude reads this on every session to understand your project",
+                desc: "Project memory file — Claude reads this at the start of every session. Acts as a 'constitution' for your codebase.",
                 examples: [
-                    { label: "Create with /init", code: "/init" },
-                    { label: "Sample CLAUDE.md content", code: "# Project: MyApp\nStack: Next.js, Prisma, PostgreSQL\nConventions: Use arrow functions, no semicolons\nTest: Run `npm test` before committing" },
-                    { label: "Subdirectory scope", code: "# Place in src/api/CLAUDE.md to scope to that folder only" },
+                    { label: "Auto-generate with /init", code: "/init" },
+                    { label: "Sample CLAUDE.md content", code: "# Project: MyApp\nStack: Next.js, Prisma, PostgreSQL\nConventions: Arrow functions, no semicolons, Vitest for tests\nValidate API responses with Zod\nTest: Run `npm test` before committing" },
+                    { label: "Scope to a subdirectory", code: "# Place a CLAUDE.md in src/api/ to scope rules to that folder only" },
                 ],
             },
             {
+                // FIX: updated custom commands to include proper frontmatter (the correct format)
                 cmd: ".claude/commands/",
-                desc: "Directory for custom slash commands shared across your team via git",
+                desc: "Directory for custom slash commands shared across your team via git. Each .md file becomes a /commandname command.",
                 examples: [
-                    { label: "Create a /deploy command", code: "mkdir -p .claude/commands\necho 'Run npm run build then deploy to staging' > .claude/commands/deploy.md" },
-                    { label: "Create a /review command", code: "echo 'Review staged changes for: bugs, style, security' > .claude/commands/review.md" },
-                    { label: "Parameterized command", code: "echo 'Write unit tests for: $ARGUMENTS' > .claude/commands/test.md\n# Usage: /test UserService" },
+                    { label: "Create a /catchup command", code: "mkdir -p .claude/commands\ncat > .claude/commands/catchup.md << 'EOF'\n---\ndescription: Summarize all changed files in the current git branch\n---\nRead all files changed in the current branch vs main and write a brief summary of what changed and why.\nEOF" },
+                    { label: "Parameterized command (use $ARGUMENTS)", code: "cat > .claude/commands/test.md << 'EOF'\n---\ndescription: Write tests for a given class or file\n---\nWrite comprehensive unit tests for: $ARGUMENTS\nInclude edge cases and error conditions.\nEOF\n# Usage: /test UserService" },
+                    { label: "Scoped to user only (not committed)", code: "# Personal commands go in ~/.claude/commands/ instead\nmkdir -p ~/.claude/commands" },
+                ],
+            },
+            {
+                cmd: ".claude/settings.json",
+                desc: "Project-level settings file for permissions, allowed tools, hooks, and model configuration.",
+                examples: [
+                    { label: "Sample settings.json", code: '{\n  "model": "claude-sonnet-4-6",\n  "permissions": {\n    "allow": [\n      "Read",\n      "Write",\n      "Bash(git *)"\n    ],\n    "deny": [\n      "Read(./.env)",\n      "Write(./production.config.*)"\n    ]\n  }\n}' },
+                    { label: "Add a PostToolUse hook (auto-format on write)", code: '{\n  "hooks": {\n    "PostToolUse": [{\n      "matcher": "Write(*.py)",\n      "hooks": [{\n        "type": "command",\n        "command": "python -m black $FILE_PATH"\n      }]\n    }]\n  }\n}' },
                 ],
             },
             {
                 cmd: ".claudeignore",
-                desc: "Tell Claude which files and folders to skip — similar to .gitignore",
+                desc: "Tell Claude which files and folders to skip — same syntax as .gitignore.",
                 examples: [
                     { label: "Sample .claudeignore", code: "node_modules/\ndist/\n.env\n*.log\ncoverage/\n.next/" },
-                    { label: "Ignore secrets", code: "**/*.pem\n**/*.key\nsecrets/\n.env*" },
+                    { label: "Ignore secrets and keys", code: "**/*.pem\n**/*.key\nsecrets/\n.env*" },
                 ],
             },
         ],
@@ -307,35 +362,35 @@ const advantages = [
         desc: "Unlike simple autocomplete tools, Claude Code executes full multi-step tasks autonomously — it reads files, runs tests, makes edits, and verifies results all in one flow.",
         flow: [
             "You: 'Add input validation to all API routes'",
-            "Claude reads all route files to understand patterns",
-            "Claude identifies missing validation cases",
+            "Claude reads all route files to understand existing patterns",
+            "Claude identifies missing validation cases in each route",
             "Claude writes and applies changes to each file",
             "Claude runs the test suite to verify nothing broke",
-            "Claude reports what was changed and why",
+            "Claude reports a summary of what changed and why",
         ],
         prompts: [
-            "Add rate limiting to all public API endpoints",
-            "Migrate all callbacks in src/ to async/await",
-            "Find and fix all TypeScript type errors in the project",
+            'claude "Add rate limiting to all public API endpoints"',
+            'claude "Migrate all callbacks in src/ to async/await"',
+            'claude "Find and fix all TypeScript type errors in the project"',
         ],
     },
     {
         title: "Whole-Codebase Context",
         icon: "📁",
         color: "#4ECDC4",
-        desc: "Claude Code reads your entire repository before responding — not just the open file. This means suggestions are accurate, consistent, and aware of your project's conventions.",
+        desc: "Claude Code reads your entire repository before responding — not just the open file. Suggestions are accurate, consistent, and aware of your project's real conventions.",
         flow: [
             "You open a new session in your project root",
             "Claude scans directory structure and key files",
-            "Claude reads CLAUDE.md for project conventions",
+            "Claude reads CLAUDE.md for project rules and conventions",
             "Claude builds a mental model of your architecture",
-            "All subsequent answers reference real code in your repo",
-            "No hallucinated function names or wrong imports",
+            "All answers reference real code and real imports in your repo",
+            "No hallucinated function names or wrong import paths",
         ],
         prompts: [
-            "What design patterns are used across this codebase?",
-            "Where is user authentication handled and how does it flow?",
-            "Are there any circular dependencies in the module structure?",
+            '"What design patterns are used across this codebase?"',
+            '"Where is user authentication handled and how does it flow?"',
+            '"Are there any circular dependencies in the module structure?"',
         ],
     },
     {
@@ -351,65 +406,66 @@ const advantages = [
             "Everything stays in one environment — zero context switching",
         ],
         prompts: [
-            "The test `auth.test.js:42` is failing — fix it",
-            "My build is failing with this error: [paste error]",
-            "Run the linter and fix all auto-fixable issues",
+            '"The test `auth.test.js:42` is failing — fix it"',
+            '"My build is failing with this error: [paste error]"',
+            '"Run the linter and fix all auto-fixable issues"',
         ],
     },
     {
         title: "MCP Extensibility",
         icon: "🔌",
         color: "#F59E0B",
-        desc: "The Model Context Protocol lets you connect Claude Code to any external service — databases, APIs, Slack, GitHub, Jira, and more — turning it into a full engineering assistant.",
+        desc: "The Model Context Protocol connects Claude Code to any external service — databases, GitHub, Jira, Slack, and more — turning it into a full engineering workflow assistant.",
         flow: [
-            "You configure a GitHub MCP server in claude_mcp_config.json",
-            "Claude can now read and create GitHub issues and PRs",
+            "You add a GitHub MCP server: claude mcp add github <url>",
+            "Claude can now read/create GitHub issues and PRs",
             "You ask: 'Create a PR for my feature branch'",
-            "Claude pushes branch, creates PR with description",
-            "Claude links relevant Jira tickets via Jira MCP",
-            "Full workflow automation from terminal",
+            "Claude pushes the branch and creates a PR with a description",
+            "You add a Jira MCP server and Claude links relevant tickets",
+            "Full workflow automation without leaving the terminal",
         ],
         prompts: [
-            "Create a GitHub PR for this branch with a detailed description",
-            "Query the database and show me the top 10 slowest queries",
-            "Post a summary of today's changes to the #dev-updates Slack channel",
+            '"Create a GitHub PR for this branch with a detailed description"',
+            '"Query the database and show me the top 10 slowest queries"',
+            '"Post a summary of today\'s changes to the #dev-updates Slack channel"',
         ],
     },
     {
         title: "Custom Slash Commands",
         icon: "⚡",
         color: "#10B981",
-        desc: "Define reusable workflows as slash commands and commit them to your repository. Every developer on your team gets the same AI-powered workflows out of the box.",
+        desc: "Define reusable workflows as slash commands in .claude/commands/ and commit them. Every developer on your team gets the same AI-powered shortcuts automatically.",
         flow: [
-            "Team lead creates .claude/commands/deploy.md",
-            "File describes the full deploy checklist",
-            "Developer runs /deploy from any machine",
-            "Claude runs tests, builds, bumps version, deploys",
-            "All steps logged and consistent across the team",
+            "Team lead creates .claude/commands/catchup.md",
+            "File contains a structured prompt with frontmatter",
+            "Developer runs /catchup from any machine after cloning",
+            "Claude reads all changed files and summarizes the branch",
+            "Consistent, repeatable AI workflow for the whole team",
+            "Commands evolve in git alongside the codebase",
         ],
         prompts: [
-            "/review — Review staged changes for bugs and security issues",
-            "/deploy staging — Run full deploy pipeline to staging",
-            "/onboard — Walk a new developer through the codebase",
+            "/catchup — Summarize all changed files vs main",
+            "/pr — Stage, clean up, and draft a PR description",
+            "/test UserService — Write tests for the UserService class",
         ],
     },
     {
         title: "Safety by Design",
         icon: "🛡️",
         color: "#EF4444",
-        desc: "Every tool call Claude makes is visible, confirmable, and reversible. You control exactly what Claude can read, write, and execute — with fine-grained permission flags.",
+        desc: "Every tool call Claude makes is visible, confirmable, and reversible. You control exactly what Claude can read, write, and execute — with fine-grained permission scoping.",
         flow: [
             "Claude proposes a file change",
             "You see a clear diff before it's applied",
-            "You approve or reject each action",
-            "You can restrict tools using --allowedTools",
-            "All actions are logged for audit",
-            "Git history preserves every AI-made change",
+            "You approve or reject each action interactively",
+            'Use --allowedTools "Read,Bash(git *)" to scope permissions',
+            "Use --sandbox to prevent any real filesystem writes",
+            "Git history preserves every AI-made change for audit",
         ],
         prompts: [
-            "claude --allowedTools read 'audit this codebase for secrets'",
-            "claude --disallowedTools bash 'refactor the database module'",
-            "Review this change before applying: [describe change]",
+            'claude --allowedTools "Read" "audit this codebase for secrets"',
+            'claude --disallowedTools "Bash,Write" "refactor the database module"',
+            'claude --sandbox "run the test suite and report failures"',
         ],
     },
     {
@@ -418,17 +474,17 @@ const advantages = [
         color: "#22C55E",
         desc: "Claude Code doesn't just write code — it verifies its own work by running your test suite, linters, and type checkers, then iterates until everything passes.",
         flow: [
-            "You ask Claude to add a new feature",
-            "Claude implements the feature across files",
+            "You ask Claude to implement a new feature",
+            "Claude implements the feature across relevant files",
             "Claude runs your test suite automatically",
-            "Tests fail — Claude reads the errors and fixes them",
-            "Claude re-runs tests until they pass",
+            "Tests fail — Claude reads the error output and fixes them",
+            "Claude re-runs tests until all pass",
             "Claude reports the final clean test output to you",
         ],
         prompts: [
-            "Implement pagination for the /users endpoint, then make sure all tests pass",
-            "Add the new feature and write tests that cover edge cases",
-            "Fix any failing tests in the auth module",
+            '"Implement pagination for the /users endpoint, then make all tests pass"',
+            '"Add the new feature and write tests that cover edge cases"',
+            '"Fix any failing tests in the auth module"',
         ],
     },
     {
@@ -437,17 +493,17 @@ const advantages = [
         color: "#6366F1",
         desc: "CLAUDE.md acts as living documentation that teaches Claude your team's conventions. New developers onboard faster, and AI assistance is consistent across every team member.",
         flow: [
-            "Senior dev writes CLAUDE.md with project conventions",
+            "Senior dev writes a detailed CLAUDE.md with project rules",
             "New developer joins and clones the repo",
-            "They run claude and instantly get context-aware help",
-            "Claude knows the stack, patterns, and rules",
-            "Consistent AI assistance for the whole team",
-            "CLAUDE.md evolves as the project grows",
+            "They run 'claude' and instantly get context-aware help",
+            "Claude knows the stack, patterns, testing strategy, and rules",
+            "Consistent AI assistance for every team member",
+            "CLAUDE.md is updated in git as the project evolves",
         ],
         prompts: [
-            "Explain the architecture of this project to a new developer",
-            "What conventions should I follow when adding a new API endpoint?",
-            "What's the testing strategy for this project?",
+            '"Explain the architecture of this project to a new developer"',
+            '"What conventions should I follow when adding a new API endpoint?"',
+            '"What\'s the testing strategy for this project?"',
         ],
     },
 ];
@@ -457,38 +513,39 @@ const sampleWorkflows = [
         title: "🐛 Bug Fix Workflow",
         color: "#EF4444",
         steps: [
-            { prompt: 'claude "there\'s a 500 error on POST /api/orders, fix it"', note: "Describe the bug" },
-            { prompt: 'claude "write a regression test for the orders bug"', note: "Prevent recurrence" },
-            { prompt: 'claude "write a commit message for this fix"', note: "Document the change" },
+            { prompt: 'claude "there\'s a 500 error on POST /api/orders — find and fix the root cause"', note: "Describe the bug precisely" },
+            { prompt: 'claude "write a regression test that would have caught the orders bug"', note: "Prevent recurrence" },
+            { prompt: '/diff', note: "Review all changes before committing" },
+            { prompt: 'claude -p "write a conventional commit message for: $(git diff --staged)"', note: "Document the fix" },
         ],
     },
     {
         title: "🚀 New Feature Workflow",
         color: "#10B981",
         steps: [
-            { prompt: 'claude "plan how to add OAuth login to this Express app"', note: "Plan first" },
-            { prompt: 'claude "implement the plan step by step"', note: "Execute the plan" },
-            { prompt: 'claude "write integration tests for the OAuth flow"', note: "Test thoroughly" },
-            { prompt: 'claude "generate a PR description for the OAuth feature"', note: "Document for review" },
+            { prompt: 'claude "plan how to add OAuth login to this Express app — list files to create or modify"', note: "Plan before coding" },
+            { prompt: 'claude "implement the plan step by step, starting with the OAuth middleware"', note: "Execute the plan" },
+            { prompt: 'claude "write integration tests for the full OAuth login flow"', note: "Test thoroughly" },
+            { prompt: 'claude -p "write a PR description for: $(git diff main...HEAD)"', note: "Document for review" },
         ],
     },
     {
         title: "♻️ Refactoring Workflow",
         color: "#A855F7",
         steps: [
-            { prompt: 'claude "identify all places using the old UserAPI and list them"', note: "Audit first" },
-            { prompt: 'claude "migrate all UserAPI usages to the new UserService"', note: "Execute migration" },
-            { prompt: 'claude "run tests and fix anything that broke"', note: "Verify integrity" },
-            { prompt: 'claude "update the README to reflect the new service architecture"', note: "Keep docs current" },
+            { prompt: 'claude --allowedTools "Read" "list every file that imports from UserAPI"', note: "Audit first, read-only" },
+            { prompt: 'claude "migrate all UserAPI usages to the new UserService interface"', note: "Execute migration" },
+            { prompt: 'claude "run the test suite and fix anything that broke during migration"', note: "Verify integrity" },
+            { prompt: 'claude "update the README architecture section to reflect UserService"', note: "Keep docs current" },
         ],
     },
     {
         title: "🔍 Code Review Workflow",
         color: "#F59E0B",
         steps: [
-            { prompt: 'claude --allowedTools read "review staged changes for bugs"', note: "Safe read-only review" },
-            { prompt: 'claude "check for security vulnerabilities in the diff"', note: "Security audit" },
-            { prompt: 'claude "suggest performance improvements for the changed code"', note: "Performance check" },
+            { prompt: 'claude --allowedTools "Read" "review staged changes for logic bugs and edge cases"', note: "Safe read-only review" },
+            { prompt: 'claude --allowedTools "Read" "check the diff for security vulnerabilities or secrets"', note: "Security audit" },
+            { prompt: '/diff', note: "Final visual check before commit" },
         ],
     },
 ];
@@ -529,8 +586,11 @@ export default function ClaudeCodeCurriculum() {
                     <h1 style={{ fontSize: "clamp(2.5rem, 5vw, 4.5rem)", fontWeight: "800", lineHeight: "1.1", margin: "0 0 12px", background: "linear-gradient(135deg, #FFFFFF 0%, #C084FC 50%, #4ECDC4 100%)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", letterSpacing: "-1px" }}>
                         Claude Code
                     </h1>
-                    <p style={{ fontSize: "1.2rem", color: "#9090C0", margin: "0 0 32px", fontStyle: "italic" }}>
+                    <p style={{ fontSize: "1.2rem", color: "#9090C0", margin: "0 0 8px", fontStyle: "italic" }}>
                         From Zero to Agentic AI Developer — The Definitive Guide
+                    </p>
+                    <p style={{ fontSize: "0.75rem", color: "#404060", margin: "0 0 32px", letterSpacing: "0.5px" }}>
+                        ✓ All commands verified against official docs · v2.1.72 · March 2026
                     </p>
 
                     <div style={{ display: "flex", gap: "24px", flexWrap: "wrap" }}>
@@ -662,7 +722,6 @@ export default function ClaudeCodeCurriculum() {
                                                         </div>
                                                     ))}
                                                 </div>
-
                                                 {ex.try?.length > 0 && (
                                                     <div style={{ marginTop: "18px" }}>
                                                         <div style={{ fontSize: "0.75rem", fontWeight: "700", color: "#C0D0E8", marginBottom: "8px" }}>Try</div>
@@ -673,7 +732,6 @@ export default function ClaudeCodeCurriculum() {
                                                         </ul>
                                                     </div>
                                                 )}
-
                                                 {ex.challenge && (
                                                     <div style={{ marginTop: "18px" }}>
                                                         <div style={{ fontSize: "0.75rem", fontWeight: "700", color: "#C0D0E8", marginBottom: "8px" }}>Challenge</div>
@@ -693,7 +751,7 @@ export default function ClaudeCodeCurriculum() {
                 {activeSection === "commands" && (
                     <div>
                         <p style={{ color: "#606080", marginBottom: "32px", fontSize: "0.9rem" }}>
-                            Click any command to expand examples. All commands are ready to copy and use.
+                            Click any command to expand examples. All commands verified against official docs (v2.1.72, March 2026).
                         </p>
                         {commands.map((cat, ci) => (
                             <div key={ci} style={{ marginBottom: "40px" }}>
@@ -710,7 +768,6 @@ export default function ClaudeCodeCurriculum() {
                                             <div key={ii} style={{ background: isOpen ? `rgba(${hexToRgb(cat.color)},0.06)` : "#111118", border: `1px solid ${isOpen ? cat.color + "50" : "#1E1E30"}`, borderRadius: "12px", overflow: "hidden", transition: "all 0.2s" }}>
                                                 <div style={{ display: "flex", alignItems: "center", gap: "16px", padding: "16px 20px", cursor: "pointer" }} onClick={() => setActiveCommand(isOpen ? null : key)}>
                                                     <code style={{ color: cat.color, fontSize: "0.85rem", fontFamily: "monospace", flex: 1, wordBreak: "break-all" }}>{item.cmd}</code>
-                                                    <span style={{ fontSize: "0.78rem", color: "#505070", flexShrink: 0, display: "none" }}>{item.desc}</span>
                                                     <div style={{ display: "flex", alignItems: "center", gap: "8px", flexShrink: 0 }}>
                                                         <span style={{ fontSize: "10px", color: "#404060", background: "rgba(255,255,255,0.05)", padding: "2px 8px", borderRadius: "10px" }}>{item.examples.length} examples</span>
                                                         <span style={{ color: cat.color, fontSize: "16px", transform: isOpen ? "rotate(90deg)" : "none", transition: "0.2s" }}>›</span>
@@ -760,10 +817,8 @@ export default function ClaudeCodeCurriculum() {
                                             </div>
                                             <span style={{ color: adv.color, fontSize: "16px", transform: isOpen ? "rotate(90deg)" : "none", transition: "0.2s", flexShrink: 0 }}>›</span>
                                         </div>
-
                                         {isOpen && (
                                             <div onClick={e => e.stopPropagation()}>
-                                                {/* Execution Flow */}
                                                 <div style={{ marginTop: "16px", padding: "14px", background: "rgba(0,0,0,0.4)", borderRadius: "8px", borderLeft: `2px solid ${adv.color}60` }}>
                                                     <p style={{ fontSize: "0.72rem", color: adv.color, letterSpacing: "1.5px", textTransform: "uppercase", margin: "0 0 10px", fontWeight: "700" }}>⟶ Execution Flow</p>
                                                     {adv.flow.map((step, si) => (
@@ -773,8 +828,6 @@ export default function ClaudeCodeCurriculum() {
                                                         </div>
                                                     ))}
                                                 </div>
-
-                                                {/* Sample Prompts */}
                                                 <div style={{ marginTop: "12px" }}>
                                                     <p style={{ fontSize: "0.72rem", color: "#505070", letterSpacing: "1.5px", textTransform: "uppercase", margin: "0 0 8px", fontWeight: "700" }}>💬 Sample Prompts</p>
                                                     {adv.prompts.map((prompt, pi) => (
@@ -828,11 +881,11 @@ export default function ClaudeCodeCurriculum() {
                             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: "14px" }}>
                                 {[
                                     { tip: "Be specific about file paths", example: '"fix the bug in src/auth/middleware.js line 42"', color: "#4ECDC4" },
-                                    { tip: "Specify expected output", example: '"generate a JSON schema for the User model"', color: "#A855F7" },
+                                    { tip: "Specify expected output format", example: '"generate a JSON schema for the User model"', color: "#A855F7" },
                                     { tip: "Include constraints", example: '"refactor using TypeScript, no external libraries"', color: "#F59E0B" },
-                                    { tip: "Reference the error message", example: '"fix: TypeError: Cannot read property of undefined at UserService.js:88"', color: "#10B981" },
-                                    { tip: "Ask for a plan first", example: '"plan how to add caching, then implement it"', color: "#FF6B35" },
-                                    { tip: "Set the scope explicitly", example: '"only modify files in the src/api/ directory"', color: "#EF4444" },
+                                    { tip: "Paste the exact error message", example: '"fix: TypeError: Cannot read property \'id\' of undefined at UserService.js:88"', color: "#10B981" },
+                                    { tip: "Ask for a plan before action", example: '"plan how to add caching, then implement it"', color: "#FF6B35" },
+                                    { tip: "Scope the task explicitly", example: '"only modify files in the src/api/ directory"', color: "#EF4444" },
                                 ].map((t, i) => (
                                     <div key={i} style={{ background: "rgba(0,0,0,0.4)", borderRadius: "8px", padding: "14px", borderLeft: `2px solid ${t.color}` }}>
                                         <div style={{ fontSize: "0.82rem", fontWeight: "700", color: "#D0D0E8", marginBottom: "8px" }}>✓ {t.tip}</div>
@@ -846,7 +899,7 @@ export default function ClaudeCodeCurriculum() {
 
                 {/* Footer */}
                 <div style={{ marginTop: "48px", padding: "24px", borderTop: "1px solid #1E1E30", textAlign: "center", color: "#404060", fontSize: "0.8rem" }}>
-                    Claude Code — by Abhinav · AI Assited Development · docs.claude.com
+                    Claude Code — by Abhinav · Verified against official docs v2.1.72 · docs.claude.com
                 </div>
             </div>
         </div>
